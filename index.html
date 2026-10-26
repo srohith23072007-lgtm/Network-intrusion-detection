@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CYBERSHIELD // Next-Gen Network Intrusion Detection System (NIDS)</title>
+    <meta name="description" content="Real-time SOC Network Intrusion Detection & Threat Intelligence Center powered by Suricata and FastAPI.">
+    <!-- Google Fonts: Inter & JetBrains Mono -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body class="cyber-dark">
+    <!-- Background grid decoration -->
+    <div class="grid-bg"></div>
+    <div class="glow-orb orb-1"></div>
+    <div class="glow-orb orb-2"></div>
+
+    <!-- Application Shell -->
+    <div class="app-layout">
+        <!-- Top Navigation Bar -->
+        <header class="top-nav">
+            <div class="brand-section">
+                <div class="logo-box">
+                    <i class="fa-solid fa-shield-halved shield-icon"></i>
+                    <span class="live-dot pulse"></span>
+                </div>
+                <div>
+                    <div class="brand-title">CYBERSHIELD <span class="brand-badge">NIDS v1.0</span></div>
+                    <div class="brand-subtitle">Suricata Intrusion Detection & Threat Intelligence Center</div>
+                </div>
+            </div>
+
+            <div class="header-center">
+                <div class="system-status-pill">
+                    <span class="pulse-indicator"></span>
+                    <span class="status-text">PIPELINE MONITORING ACTIVE</span>
+                </div>
+                <div class="threat-level-pill" id="threat-level-pill">
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                    <span id="threat-level-text">DEFCON 2 // ELEVATED</span>
+                </div>
+            </div>
+
+            <div class="header-actions">
+                <button id="btn-simulate" class="btn btn-danger-glow" title="Simulate incoming attack packet">
+                    <i class="fa-solid fa-bolt"></i> Simulate Attack
+                </button>
+                <button id="btn-refresh" class="btn btn-secondary" title="Refresh all alerts & stats">
+                    <i class="fa-solid fa-arrows-rotate"></i> Refresh
+                </button>
+                <div class="auto-refresh-toggle" title="Toggle 5s live polling">
+                    <label class="switch">
+                        <input type="checkbox" id="auto-refresh-checkbox" checked>
+                        <span class="slider round"></span>
+                    </label>
+                    <span class="toggle-label">Live Stream</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Dashboard View -->
+        <main class="dashboard-content">
+            <!-- Metric Cards (KPIs) -->
+            <section class="kpi-grid">
+                <div class="kpi-card glass-panel" id="card-total">
+                    <div class="kpi-header">
+                        <span class="kpi-title">TOTAL INTRUSIONS</span>
+                        <div class="kpi-icon-wrap icon-blue">
+                            <i class="fa-solid fa-network-wired"></i>
+                        </div>
+                    </div>
+                    <div class="kpi-value-row">
+                        <span class="kpi-value" id="kpi-total-val">--</span>
+                        <span class="kpi-subtext">all logged events</span>
+                    </div>
+                    <div class="kpi-footer">
+                        <span class="badge-subtle badge-info"><i class="fa-solid fa-database"></i> SQLite Sync</span>
+                    </div>
+                </div>
+
+                <div class="kpi-card glass-panel alert-glow" id="card-critical">
+                    <div class="kpi-header">
+                        <span class="kpi-title">CRITICAL & HIGH</span>
+                        <div class="kpi-icon-wrap icon-red">
+                            <i class="fa-solid fa-biohazard"></i>
+                        </div>
+                    </div>
+                    <div class="kpi-value-row">
+                        <span class="kpi-value kpi-danger" id="kpi-critical-val">--</span>
+                        <span class="kpi-subtext">requires immediate triage</span>
+                    </div>
+                    <div class="kpi-footer">
+                        <span class="badge-subtle badge-danger" id="kpi-critical-pct">--% of total</span>
+                    </div>
+                </div>
+
+                <div class="kpi-card glass-panel" id="card-24h">
+                    <div class="kpi-header">
+                        <span class="kpi-title">LAST 24 HOURS</span>
+                        <div class="kpi-icon-wrap icon-amber">
+                            <i class="fa-solid fa-clock-rotate-left"></i>
+                        </div>
+                    </div>
+                    <div class="kpi-value-row">
+                        <span class="kpi-value" id="kpi-24h-val">--</span>
+                        <span class="kpi-subtext">new events detected</span>
+                    </div>
+                    <div class="kpi-footer">
+                        <span class="badge-subtle badge-warning"><i class="fa-solid fa-wave-square"></i> Real-time Velocity</span>
+                    </div>
+                </div>
+
+                <div class="kpi-card glass-panel" id="card-protocols">
+                    <div class="kpi-header">
+                        <span class="kpi-title">ACTIVE PROTOCOLS</span>
+                        <div class="kpi-icon-wrap icon-purple">
+                            <i class="fa-solid fa-diagram-project"></i>
+                        </div>
+                    </div>
+                    <div class="kpi-value-row">
+                        <span class="kpi-value" id="kpi-proto-val">TCP / UDP</span>
+                        <span class="kpi-subtext" id="kpi-proto-breakdown">3 protocols</span>
+                    </div>
+                    <div class="kpi-footer">
+                        <span class="badge-subtle badge-purple"><i class="fa-solid fa-filter"></i> Deep Packet Inspection</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Middle Section: Visual Threat Breakdown & Quick Triage -->
+            <section class="analytics-row">
+                <!-- Severity Breakdown -->
+                <div class="analytics-card glass-panel">
+                    <div class="card-header-clean">
+                        <h3><i class="fa-solid fa-chart-pie accent-cyan"></i> Severity Distribution</h3>
+                        <span class="pill-tag" id="severity-total-tag">Suricata Eve Log</span>
+                    </div>
+                    <div class="severity-bars" id="severity-bars-container">
+                        <div class="bar-row">
+                            <div class="bar-meta">
+                                <span class="sev-tag sev-critical">CRITICAL</span>
+                                <span class="sev-count" id="sev-critical-count">0</span>
+                            </div>
+                            <div class="bar-track">
+                                <div class="bar-fill fill-critical" id="bar-critical" style="width: 0%"></div>
+                            </div>
+                        </div>
+                        <div class="bar-row">
+                            <div class="bar-meta">
+                                <span class="sev-tag sev-high">HIGH</span>
+                                <span class="sev-count" id="sev-high-count">0</span>
+                            </div>
+                            <div class="bar-track">
+                                <div class="bar-fill fill-high" id="bar-high" style="width: 0%"></div>
+                            </div>
+                        </div>
+                        <div class="bar-row">
+                            <div class="bar-meta">
+                                <span class="sev-tag sev-medium">MEDIUM</span>
+                                <span class="sev-count" id="sev-medium-count">0</span>
+                            </div>
+                            <div class="bar-track">
+                                <div class="bar-fill fill-medium" id="bar-medium" style="width: 0%"></div>
+                            </div>
+                        </div>
+                        <div class="bar-row">
+                            <div class="bar-meta">
+                                <span class="sev-tag sev-low">LOW / INFO</span>
+                                <span class="sev-count" id="sev-low-count">0</span>
+                            </div>
+                            <div class="bar-track">
+                                <div class="bar-fill fill-low" id="bar-low" style="width: 0%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Protocol Distribution & PCAP Analyzer Quick Action -->
+                <div class="analytics-card glass-panel">
+                    <div class="card-header-clean">
+                        <h3><i class="fa-solid fa-layer-group accent-purple"></i> Protocol Breakdown</h3>
+                        <span class="pill-tag">L4 Distribution</span>
+                    </div>
+                    <div class="protocol-chips-grid" id="protocol-chips-grid">
+                        <div class="proto-chip">
+                            <span class="proto-name">TCP</span>
+                            <span class="proto-val" id="proto-tcp-count">0</span>
+                        </div>
+                        <div class="proto-chip">
+                            <span class="proto-name">UDP</span>
+                            <span class="proto-val" id="proto-udp-count">0</span>
+                        </div>
+                        <div class="proto-chip">
+                            <span class="proto-name">ICMP</span>
+                            <span class="proto-val" id="proto-icmp-count">0</span>
+                        </div>
+                    </div>
+
+                    <div class="pcap-trigger-box">
+                        <div class="pcap-info">
+                            <h4><i class="fa-solid fa-file-shield"></i> Offline PCAP Inspection</h4>
+                            <p>Ingest network packet dumps directly into the Suricata engine.</p>
+                        </div>
+                        <button id="btn-open-pcap-modal" class="btn btn-outline-cyan">
+                            <i class="fa-solid fa-upload"></i> Analyze PCAP
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Alerts Feed & Management Table -->
+            <section class="alerts-section glass-panel">
+                <div class="alerts-controls-bar">
+                    <div class="alerts-heading">
+                        <h2><i class="fa-solid fa-shield-virus accent-red"></i> Intrusion Alert Feed</h2>
+                        <span class="alert-count-badge" id="displayed-alert-count">0 alerts</span>
+                    </div>
+
+                    <div class="filter-controls">
+                        <!-- Search Box -->
+                        <div class="search-input-box">
+                            <i class="fa-solid fa-magnifying-glass"></i>
+                            <input type="text" id="filter-search" placeholder="Search IP, Signature, Category...">
+                        </div>
+
+                        <!-- Severity Filter -->
+                        <div class="select-box">
+                            <label for="filter-severity">Severity:</label>
+                            <select id="filter-severity">
+                                <option value="">All Severities</option>
+                                <option value="Critical">Critical</option>
+                                <option value="High">High</option>
+                                <option value="Medium">Medium</option>
+                                <option value="Low">Low</option>
+                            </select>
+                        </div>
+
+                        <!-- Status Filter -->
+                        <div class="select-box">
+                            <label for="filter-status">Status:</label>
+                            <select id="filter-status">
+                                <option value="">All Statuses</option>
+                                <option value="open">Open</option>
+                                <option value="investigating">Investigating</option>
+                                <option value="resolved">Resolved</option>
+                                <option value="dismissed">Dismissed</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Alerts Table -->
+                <div class="table-container">
+                    <table class="cyber-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 80px">ID</th>
+                                <th style="width: 140px">TIMESTAMP</th>
+                                <th style="width: 110px">SEVERITY</th>
+                                <th>THREAT SIGNATURE & CATEGORY</th>
+                                <th style="width: 180px">SOURCE</th>
+                                <th style="width: 180px">DESTINATION</th>
+                                <th style="width: 90px">PROTO</th>
+                                <th style="width: 140px">STATUS</th>
+                                <th style="width: 90px">ACTION</th>
+                            </tr>
+                        </thead>
+                        <tbody id="alerts-tbody">
+                            <tr>
+                                <td colspan="9" class="loading-cell">
+                                    <div class="spinner"></div>
+                                    <span>Syncing alert telemetry from Suricata backend...</span>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Alert Detail Modal -->
+    <div class="cyber-modal-overlay" id="detail-modal" style="display: none;">
+        <div class="cyber-modal glass-modal">
+            <div class="modal-header">
+                <div class="modal-title-wrap">
+                    <i class="fa-solid fa-triangle-exclamation accent-red"></i>
+                    <h3>Alert Detail & Forensic Inspection</h3>
+                </div>
+                <button class="modal-close-btn" id="btn-close-detail">&times;</button>
+            </div>
+            <div class="modal-body" id="detail-modal-body">
+                <!-- Injected via JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Threat Simulation Modal -->
+    <div class="cyber-modal-overlay" id="simulate-modal" style="display: none;">
+        <div class="cyber-modal glass-modal">
+            <div class="modal-header">
+                <div class="modal-title-wrap">
+                    <i class="fa-solid fa-bolt accent-cyan"></i>
+                    <h3>Inject Simulated Intrusion Attack</h3>
+                </div>
+                <button class="modal-close-btn" id="btn-close-simulate">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p class="modal-lead">Quickly trigger preset intrusion vectors or craft custom payloads to test IDS alerts and rule matching.</p>
+                
+                <div class="preset-attacks-row">
+                    <button class="preset-btn" data-type="sqli">
+                        <i class="fa-solid fa-database"></i>
+                        <span>SQL Injection</span>
+                    </button>
+                    <button class="preset-btn" data-type="ssh_brute">
+                        <i class="fa-solid fa-key"></i>
+                        <span>SSH Brute Force</span>
+                    </button>
+                    <button class="preset-btn" data-type="c2_beacon">
+                        <i class="fa-solid fa-satellite-dish"></i>
+                        <span>Malware C2 Beacon</span>
+                    </button>
+                    <button class="preset-btn" data-type="eternalblue">
+                        <i class="fa-solid fa-bomb"></i>
+                        <span>EternalBlue SMB</span>
+                    </button>
+                    <button class="preset-btn" data-type="syn_flood">
+                        <i class="fa-solid fa-water"></i>
+                        <span>SYN Flood DDoS</span>
+                    </button>
+                </div>
+
+                <form id="simulate-form" class="cyber-form">
+                    <div class="form-row">
+                        <div class="form-group flex-2">
+                            <label for="sim-signature">Alert Signature</label>
+                            <input type="text" id="sim-signature" required value="ET WEB_SPECIFIC_APPS SQL Injection Attempt in URI">
+                        </div>
+                        <div class="form-group flex-1">
+                            <label for="sim-severity">Severity</label>
+                            <select id="sim-severity">
+                                <option value="Critical">Critical</option>
+                                <option value="High" selected>High</option>
+                                <option value="Medium">Medium</option>
+                                <option value="Low">Low</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group flex-2">
+                            <label for="sim-category">Category</label>
+                            <input type="text" id="sim-category" required value="Web Application Attack">
+                        </div>
+                        <div class="form-group flex-1">
+                            <label for="sim-protocol">Protocol</label>
+                            <select id="sim-protocol">
+                                <option value="TCP" selected>TCP</option>
+                                <option value="UDP">UDP</option>
+                                <option value="ICMP">ICMP</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group flex-1">
+                            <label for="sim-src-ip">Source IP</label>
+                            <input type="text" id="sim-src-ip" required value="198.51.100.42">
+                        </div>
+                        <div class="form-group flex-1">
+                            <label for="sim-src-port">Source Port</label>
+                            <input type="number" id="sim-src-port" value="54120">
+                        </div>
+                        <div class="form-group flex-1">
+                            <label for="sim-dst-ip">Destination IP</label>
+                            <input type="text" id="sim-dst-ip" required value="10.0.0.8">
+                        </div>
+                        <div class="form-group flex-1">
+                            <label for="sim-dst-port">Destination Port</label>
+                            <input type="number" id="sim-dst-port" value="80">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="sim-desc">Description / Forensic Notes</label>
+                        <textarea id="sim-desc" rows="2">Automated injection test vector targeting vulnerable backend parameters.</textarea>
+                    </div>
+
+                    <div class="modal-actions">
+                        <button type="button" class="btn btn-secondary" id="btn-cancel-simulate">Cancel</button>
+                        <button type="submit" class="btn btn-danger-glow" id="btn-submit-simulate">
+                            <i class="fa-solid fa-paper-plane"></i> Inject Threat Event
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- PCAP Analyzer Modal -->
+    <div class="cyber-modal-overlay" id="pcap-modal" style="display: none;">
+        <div class="cyber-modal glass-modal">
+            <div class="modal-header">
+                <div class="modal-title-wrap">
+                    <i class="fa-solid fa-file-waveform accent-purple"></i>
+                    <h3>Execute Offline PCAP Analysis</h3>
+                </div>
+                <button class="modal-close-btn" id="btn-close-pcap">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p class="modal-lead">Feed a packet capture (.pcap) file to Suricata. The engine will inspect network packets, match signatures, and extract alerts to the database.</p>
+                
+                <form id="pcap-form" class="cyber-form">
+                    <div class="form-group">
+                        <label for="pcap-path-input">PCAP File Path (Absolute Path)</label>
+                        <input type="text" id="pcap-path-input" placeholder="e.g. C:\Users\...\samples\attack_capture.pcap" required>
+                    </div>
+
+                    <div class="pcap-quick-samples">
+                        <span>Quick Presets:</span>
+                        <button type="button" class="btn-tag" id="btn-use-sample-pcap">Generate & Analyze Test PCAP</button>
+                    </div>
+
+                    <div id="pcap-result-box" class="pcap-result-box" style="display: none;"></div>
+
+                    <div class="modal-actions">
+                        <button type="button" class="btn btn-secondary" id="btn-cancel-pcap">Cancel</button>
+                        <button type="submit" class="btn btn-cyan-glow" id="btn-run-pcap">
+                            <i class="fa-solid fa-play"></i> Run Engine Analysis
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification Banner -->
+    <div id="toast-container" class="toast-container"></div>
+
+    <script src="/static/app.js"></script>
+</body>
+</html>

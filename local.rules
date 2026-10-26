@@ -1,0 +1,6 @@
+# Emerging Threats / Custom NIDS Rules
+alert tcp any any -> any 22 (msg:"ET SCAN Potential SSH Brute Force"; flags:S; threshold:type both, track by_src, count 5, seconds 60; classtype:attempted-admin; sid:2001001; rev:1;)
+alert tcp any any -> any 80 (msg:"ET WEB_SPECIFIC_APPS SQL Injection Attempt in URI"; content:"UNION"; nocase; content:"SELECT"; nocase; distance:0; classtype:web-application-attack; sid:2002001; rev:1;)
+alert tcp any any -> any 445 (msg:"ET EXPLOIT SMBv1 Exploit Attempt (MS17-010 EternalBlue)"; content:"|ff|SMB"; depth:5; offset:4; classtype:attempted-admin; sid:2003001; rev:1;)
+alert tcp any any -> any any (msg:"ET TROJAN Metasploit Reverse TCP Payload Active"; content:"|00 00 00 00|"; depth:4; classtype:trojan-activity; sid:2004001; rev:1;)
+alert udp any any -> any 53 (msg:"ET MALWARE Possible DNS Tunneling / Data Exfiltration"; content:"|00 10 00 01|"; classtype:bad-unknown; sid:2005001; rev:1;)
